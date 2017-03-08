@@ -1,0 +1,9 @@
+{
+    "macros": [ "MBEDTLS_USER_CONFIG_FILE=\"mbedtls_entropy_config.h\"", "MBEDTLS_TEST_NULL_ENTROPY", "MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES","MBEDTLS_SHA1_C", "MBEDTLS_MD5_C", "MBEDTLS_SSL_PROTO_TLS1_1"  ],
+    "target_overrides": {
+        "*": {
+            "mbed-http.http-buffer-size": 8192
+        }
+    }
+}
+ 
