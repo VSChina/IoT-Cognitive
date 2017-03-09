@@ -4,6 +4,7 @@
 #include "https_request.h"
 #include "http_request.h"
 #include "wav.h"
+#include "SASToken.h"
 
 #define DURATION 2
 #define SAMPLE_RATE 8000
@@ -21,8 +22,11 @@ int file_size = 0;
 int setupRealTime(void)
 {
     NTPClient ntp(spwf);
-    ntp.setTime("be.pool.ntp.org");
-    return 0;
+    int result = 0;
+    do {
+        result = ntp.setTime("0.pool.ntp.org");
+    } while (result != 0);
+    return result;
 }
 
 Ticker ticker;
@@ -60,16 +64,6 @@ char* getWav() {
     printf("\n");
     return file;
 }
-
-void dump_response(HttpResponse* res) {
-    mbedtls_printf("Status: %d - %s\n", res->get_status_code(), res->get_status_message().c_str());
-
-    mbedtls_printf("Headers:\n");
-    for (size_t ix = 0; ix < res->get_headers_length(); ix++) {
-        mbedtls_printf("\t%s: %s\n", res->get_headers_fields()[ix].c_str(), res->get_headers_values()[ix].c_str());
-    }
-    mbedtls_printf("\nBody:\n\n%s\n", res->get_body().c_str());
-}
     const char CERT[] = 
 "-----BEGIN CERTIFICATE-----\r\nMIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJ\r\n"
 "RTESMBAGA1UEChMJQmFsdGltb3JlMRMwEQYDVQQLEwpDeWJlclRydXN0MSIwIAYD\r\nVQQDExlCYWx0aW1vcmUgQ3liZXJUcnVzdCBSb290MB4XDTAwMDUxMjE4NDYwMFoX\r\n"
@@ -96,10 +90,8 @@ int main(void)
             printf("failed.\r\n");
         }
     }
-    //setupRealTime();
 
     HttpRequest* guidRequest = new HttpRequest(&spwf, HTTP_GET, "http://www.fileformat.info/tool/guid.htm?count=1&format=text");
-    //req->set_debug(true);
     HttpResponse* response = guidRequest->send();
     if (!response) {
         printf("HttpRequest failed\n");
@@ -111,6 +103,7 @@ int main(void)
 &form=BCSSTT&version=3.0&format=json&instanceid=0E08849D-51AE-4C0E-81CD-21FE3A419868&requestid=%s-%s-%s-%s-%s", 
         body.substr(0, 8).c_str(), body.substr(8, 4).c_str(), body.substr(12, 4).c_str(), body.substr(16, 4).c_str(), body.substr(20, 12).c_str());
     printf("%s\r\n", requestUri);
+    delete guidRequest;
 
     HttpsRequest* tokenRequest = new HttpsRequest(&spwf, CERT, HTTP_POST, "https://api.cognitive.microsoft.com/sts/v1.0/issueToken");
     tokenRequest->set_header("Ocp-Apim-Subscription-Key", "a4b1a40cb1f74ab1af757a0e700fa847");
@@ -128,7 +121,19 @@ int main(void)
     speechRequest->set_header("Content-Type", "plain/text");
     response = speechRequest->send(file, 45 + file_size);
     body = response->get_body();
-    printf("result <%s>\r\n", body.c_str());
+    printf("congnitive result <%s>\r\n", body.c_str());
+    delete speechRequest;
+    SASToken iothubtoken;
+    do {
+        setupRealTime();
+    } while(strlen(iothubtoken.getValue(time(NULL))) == 0);
+    sprintf(requestUri, "https://%s/devices/%s/messages/events?api-version=2016-11-14", IOTHUB_HOST, DEVICE_ID);
+    printf("<%s>\r\n", requestUri);
+    HttpsRequest* iotRequest = new HttpsRequest(&spwf, CERT, HTTP_POST, requestUri);
+    iotRequest->set_header("Authorization", iothubtoken.getValue(time(NULL)));
+    response = iotRequest->send(body.c_str(), body.length());
+    body = response->get_body();
+    printf("iot hub result <%s>\r\n", body.c_str());
     return 0;
 }
 
