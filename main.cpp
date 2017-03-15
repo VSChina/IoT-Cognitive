@@ -3,14 +3,10 @@
 #include "SPWFSAInterface5.h"
 #include "https_request.h"
 #include "http_request.h"
-#include "wav.h"
 #include "SASToken.h"
+#include "Microphone.h"
 
-#define DURATION 2
-#define SAMPLE_RATE 8000
-#define BITS_PER_SAMPLE 8
-AnalogIn Micrphone(A0);
-
+Microphone microphone(A0);
 Serial pc(USBTX, USBRX, 115200);
 SPWFSAInterface5 spwf(D8, D2, false);
 const char *ssid = "Ruff_R0101965"; // Ruff_R0101965, laptop_jiaqi
@@ -18,7 +14,6 @@ const char *pwd = "Password01!";
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-int file_size = 0;
 int setupRealTime(void)
 {
     NTPClient ntp(spwf);
@@ -29,42 +24,7 @@ int setupRealTime(void)
     return result;
 }
 
-Ticker ticker;
-char * tmp;
-int records = 0;
-
-void readMic() {
-    if (records >= DURATION * SAMPLE_RATE) return;
-    int x = 0;
-    //if (records < 16000) x = fake[records];
-    if (BITS_PER_SAMPLE == 16) x = Micrphone.read_u16();
-    else x = Micrphone.read_u16() / 256;
-    memcpy(tmp, &x, BITS_PER_SAMPLE / 8);
-    tmp += BITS_PER_SAMPLE / 8;
-    records++;
-}
-
-char* getWav() {
-    WaveHeader * hdr = genericWAVHeader(SAMPLE_RATE, BITS_PER_SAMPLE, 1);
-    char* file = recordWAV(hdr, DURATION, &file_size);
-    if (file == NULL) {
-        printf("Error the wav file did not created \r\n");
-        return NULL;
-    }
-    tmp = file + 44;
-    printf("//record\r\n");
-    ticker.attach(&readMic, 1.0 / SAMPLE_RATE);
-    wait(DURATION);
-    printf("//file size %d,  %d \r\n", file_size, tmp - file);
-    file[44 + file_size] = 0x0;
-    for (int i = 0; i < 45 + file_size; ++i) {
-        if (i % 50 == 0) printf("\n");
-        printf("%d,", file[i]);
-    }
-    printf("\n");
-    return file;
-}
-    const char CERT[] = 
+const char CERT[] = 
 "-----BEGIN CERTIFICATE-----\r\nMIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJ\r\n"
 "RTESMBAGA1UEChMJQmFsdGltb3JlMRMwEQYDVQQLEwpDeWJlclRydXN0MSIwIAYD\r\nVQQDExlCYWx0aW1vcmUgQ3liZXJUcnVzdCBSb290MB4XDTAwMDUxMjE4NDYwMFoX\r\n"
 "DTI1MDUxMjIzNTkwMFowWjELMAkGA1UEBhMCSUUxEjAQBgNVBAoTCUJhbHRpbW9y\r\nZTETMBEGA1UECxMKQ3liZXJUcnVzdDEiMCAGA1UEAxMZQmFsdGltb3JlIEN5YmVy\r\n"
@@ -76,23 +36,10 @@ char* getWav() {
 "jkzSswF07r51XgdIGn9w/xZchMB5hbgF/X++ZRGjD8ACtPhSNzkE1akxehi/oCr0\r\nEpn3o0WC4zxe9Z2etciefC7IpJ5OCBRLbf1wbWsaY71k5h+3zvDyny67G7fyUIhz\r\n"
 "ksLi4xaNmjICq44Y3ekQEe5+NauQrz4wlHrQMz2nZQ/1/I6eYs9HRCwBXbsdtTLS\r\nR9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp\r\n-----END CERTIFICATE-----\r\n";
 
-int main(void)
-{
-    char * file = getWav();
-    printf("Start...\n");
-    while(true) {
-        printf("Try to connect %s ...\n", ssid);
-        if(spwf.connect(ssid, pwd, NSAPI_SECURITY_WPA2) == NSAPI_ERROR_OK) {
-            printf("connected %s\r\n", spwf.get_mac_address());
-            break;
-        }
-        else {
-            printf("failed.\r\n");
-        }
-    }
-
+HttpResponse* response;
+int request(char *file, int file_size){
     HttpRequest* guidRequest = new HttpRequest(&spwf, HTTP_GET, "http://www.fileformat.info/tool/guid.htm?count=1&format=text");
-    HttpResponse* response = guidRequest->send();
+    response = guidRequest->send();
     if (!response) {
         printf("HttpRequest failed\n");
         return 1;
@@ -119,7 +66,7 @@ int main(void)
     HttpsRequest* speechRequest = new HttpsRequest(&spwf, CERT, HTTP_POST, requestUri);
     speechRequest->set_header("Authorization", "Bearer " + body);
     speechRequest->set_header("Content-Type", "plain/text");
-    response = speechRequest->send(file, 45 + file_size);
+    response = speechRequest->send(file, file_size);
     body = response->get_body();
     printf("congnitive result <%s>\r\n", body.c_str());
     delete speechRequest;
@@ -134,6 +81,36 @@ int main(void)
     response = iotRequest->send(body.c_str(), body.length());
     body = response->get_body();
     printf("iot hub result <%s>\r\n", body.c_str());
+    delete iotRequest;
+}
+
+int main(void)
+{
+    printf("Start...\n");
+    while(true) {
+        printf("Try to connect %s ...\n", ssid);
+        if(spwf.connect(ssid, pwd, NSAPI_SECURITY_WPA2) == NSAPI_ERROR_OK) {
+            printf("connected %s\r\n", spwf.get_mac_address());
+            break;
+        }
+        else {
+            printf("failed.\r\n");
+        }
+    }
+    int file_size;
+    char *file;
+    DigitalIn button(USER_BUTTON);
+    button.mode(PullUp);
+    int old_pb = 1, new_pb;
+    while(1) {
+        new_pb = button.read();
+        if(new_pb == 1 && old_pb == 0) {
+            file = microphone.getWav(&file_size);
+            printf("//%d\r\n", file_size);
+            request(file, file_size);
+        }
+        old_pb = new_pb;
+    }
     return 0;
 }
 
