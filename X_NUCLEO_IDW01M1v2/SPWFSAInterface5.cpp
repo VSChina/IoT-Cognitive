@@ -326,7 +326,7 @@ int SPWFSAInterface5::socket_recv(void *handle, void *data, unsigned size)
             break;
         }
     }
-	printf("!!!!!!!!!!!!!!!!!!!!!recv %d\r\n", recv);
+	printf("SPWFSAInterface5::socket_recv got result: %d\r\n", recv);
 	if (recv == -1)
 		recv = NSAPI_ERROR_WOULD_BLOCK;//send this if we want to block call (else timeout will happen)
 	else if (recv == -2)

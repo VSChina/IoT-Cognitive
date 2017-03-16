@@ -4,21 +4,22 @@
 #include "mbed.h"
 #include "http_request.h"
 
+
 class SpeechInterface
 {
     public:
-        SpeechInterface(NetworkInterface * networkInterface, char * subId);
-        virtual ~SpeechInterface();
+        SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, bool debug = false);
+        virtual ~SpeechInterface(void);
 
-        char * recognizeSpeech(char * audioFileBinary, int length);
-        char * convertTextToSpeech(char * text, int length); 
+        int recognizeSpeech(char * audioFileBinary, int length, char * text, int textLen);
+        int convertTextToSpeech(char * text, int length, char * audioFileBinary, int audioLen); 
 
-    private:
-        char * generateGuidStr();
-        char * getJwtToken(char * subId);
+    //private:
+        int generateGuidStr(char * guidStr);
+        int getJwtToken(char * token, int tokenLen);
 
-        NetworkInterface * netwowrkInterface;
-        char cognitive_sub_id[32];
+        NetworkInterface * _wifi;
+        char _cognitiveSubKey[33];
         bool _debug;
 };
 

@@ -7,8 +7,8 @@
 #include <string.h>
 
 #define DURATION 2
-#define SAMPLE_RATE 8000
-#define BITS_PER_SAMPLE 8
+#define DEFAULT_SAMPLE_RATE 8000
+#define DEFAULT_BITS_PER_SAMPLE 8
 #define MONO 1
 
 typedef struct
@@ -29,7 +29,7 @@ typedef struct
 class Microphone
 {
     public:
-        Microphone(PinName microphone, uint32_t duration = DURATION, uint32_t sample_rate = SAMPLE_RATE, uint16_t bit_depth = BITS_PER_SAMPLE, uint16_t channels = MONO);
+        Microphone(PinName microphone, uint32_t duration = DURATION, uint32_t sample_rate = DEFAULT_SAMPLE_RATE, uint16_t bit_depth = DEFAULT_BITS_PER_SAMPLE, uint16_t channels = MONO);
         char* getWav(int *file_size);
 
     private:

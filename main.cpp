@@ -5,12 +5,14 @@
 #include "http_request.h"
 #include "SASToken.h"
 #include "Microphone.h"
+#include "SpeechInterface.h"
 
 Microphone microphone(A0);
 Serial pc(USBTX, USBRX, 115200);
 SPWFSAInterface5 spwf(D8, D2, false);
 const char *ssid = "Ruff_R0101965"; // Ruff_R0101965, laptop_jiaqi
 const char *pwd = "Password01!";
+
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -37,7 +39,10 @@ const char CERT[] =
 "ksLi4xaNmjICq44Y3ekQEe5+NauQrz4wlHrQMz2nZQ/1/I6eYs9HRCwBXbsdtTLS\r\nR9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp\r\n-----END CERTIFICATE-----\r\n";
 
 HttpResponse* response;
-int request(char *file, int file_size){
+int request(char *file, int file_size)
+{
+
+    /*
     HttpRequest* guidRequest = new HttpRequest(&spwf, HTTP_GET, "http://www.fileformat.info/tool/guid.htm?count=1&format=text");
     response = guidRequest->send();
     if (!response) {
@@ -45,12 +50,26 @@ int request(char *file, int file_size){
         return 1;
     }
     string body = response->get_body();
+
     char *requestUri = (char *)malloc(300);
     sprintf(requestUri, "https://speech.platform.bing.com/recognize?scenarios=smd&appid=D4D52672-91D7-4C74-8AD8-42B1D98141A5&locale=en-us&device.os=bot\
 &form=BCSSTT&version=3.0&format=json&instanceid=0E08849D-51AE-4C0E-81CD-21FE3A419868&requestid=%s-%s-%s-%s-%s", 
         body.substr(0, 8).c_str(), body.substr(8, 4).c_str(), body.substr(12, 4).c_str(), body.substr(16, 4).c_str(), body.substr(20, 12).c_str());
+
     printf("%s\r\n", requestUri);
     delete guidRequest;
+    */
+
+    SpeechInterface * speechInterface = new SpeechInterface(&spwf, "a4b1a40cb1f74ab1af757a0e700fa847", true);
+    char * guid = (char *)malloc(33);
+    speechInterface->generateGuidStr(guid);
+
+    char *requestUri = (char *)malloc(300);
+    sprintf(requestUri, "https://speech.platform.bing.com/recognize?scenarios=smd&appid=D4D52672-91D7-4C74-8AD8-42B1D98141A5&locale=en-us&device.os=bot\
+&form=BCSSTT&version=3.0&format=json&instanceid=0E08849D-51AE-4C0E-81CD-21FE3A419868&requestid=%s", guid);
+    printf("%s\r\n", requestUri);
+
+    
 
     HttpsRequest* tokenRequest = new HttpsRequest(&spwf, CERT, HTTP_POST, "https://api.cognitive.microsoft.com/sts/v1.0/issueToken");
     tokenRequest->set_header("Ocp-Apim-Subscription-Key", "a4b1a40cb1f74ab1af757a0e700fa847");
@@ -59,7 +78,7 @@ int request(char *file, int file_size){
         printf("HttpRequest failed (error code %d)\n", tokenRequest->get_error());
         return 1;
     }
-    body = response->get_body();
+    string body = response->get_body();
     printf("token<%s>\r\n", body.c_str());
     delete tokenRequest;
 
@@ -97,6 +116,8 @@ int main(void)
             printf("failed.\r\n");
         }
     }
+
+    
     int file_size;
     char *file;
     DigitalIn button(USER_BUTTON);
@@ -105,12 +126,19 @@ int main(void)
     while(1) {
         new_pb = button.read();
         if(new_pb == 1 && old_pb == 0) {
+            printf("Start record...\r\n");
             file = microphone.getWav(&file_size);
+            
+            for (int i = 0; i < 45 + file_size; ++i) {
+                if (i % 50 == 0) printf("\n");
+                printf("%d,", file[i]);
+            }
+
             printf("//%d\r\n", file_size);
             request(file, file_size);
         }
         old_pb = new_pb;
     }
+    
     return 0;
 }
-
