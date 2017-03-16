@@ -100,11 +100,11 @@ int main(void)
     int file_size;
     char *file;
     DigitalIn button(USER_BUTTON);
-    button.mode(PullUp);
-    int old_pb = 1, new_pb;
+    int old_pb = 0, new_pb;
     while(1) {
         new_pb = button.read();
-        if(new_pb == 1 && old_pb == 0) {
+        if(new_pb == 0 && old_pb == 1) {
+            printf("start record...\r\n");
             file = microphone.getWav(&file_size);
             printf("//%d\r\n", file_size);
             request(file, file_size);
