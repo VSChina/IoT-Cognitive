@@ -51,8 +51,6 @@ int main(void)
             */
             printf("//%d\r\n", file_size);
             
-            char * resultJson;
-            int resultLen = 0;
             SpeechResponse* response = speechInterface->recognizeSpeech(file, file_size);
         }
         old_pb = new_pb;
