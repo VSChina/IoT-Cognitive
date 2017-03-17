@@ -4,6 +4,12 @@
 #include "mbed.h"
 #include "http_request.h"
 
+typedef struct
+{
+    char * status;  //success or error
+    char * text;
+    float confidence;
+}SpeechResponse;
 
 class SpeechInterface
 {
@@ -11,15 +17,20 @@ class SpeechInterface
         SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, bool debug = false);
         virtual ~SpeechInterface(void);
 
-        int recognizeSpeech(char * audioFileBinary, int length, char * text, int textLen);
+        SpeechResponse* recognizeSpeech(char * audioFileBinary, int length);
         int convertTextToSpeech(char * text, int length, char * audioFileBinary, int audioLen); 
 
-    //private:
+    private:
         int generateGuidStr(char * guidStr);
-        int getJwtToken(char * token, int tokenLen);
+        string getJwtToken();
+        int setupRealTime(void);
+        int sentToIotHub(char * file, int length);
 
         NetworkInterface * _wifi;
         char _cognitiveSubKey[33];
+
+        char * requestUri;
+        HttpResponse* _response;
         bool _debug;
 };
 
