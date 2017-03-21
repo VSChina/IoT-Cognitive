@@ -6,7 +6,6 @@
 #include "https_request.h"
 #include "SASToken.h"
 
-
 #if _debug
 #define DBG(x, ...)  printf("[SPEECHINTERFACE: DBG] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
 #define WARN(x, ...) printf("[SPEECHINTERFACE: WARN] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
@@ -38,10 +37,13 @@ const char CERT[] =
 SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug)
 {
     _wifi = networkInterface;
+    requestUri = (char *)malloc(300);
+    _cognitiveSubKey = (char *)malloc(33);
+    _deviceId = (char *)malloc(37);
+
     memcpy(_cognitiveSubKey, subscriptionKey, 33);
     memcpy(_deviceId, deviceId, 37);
-    requestUri = (char *)malloc(300);
-
+    
     _response = NULL;
     _debug = debug;
 
@@ -49,7 +51,11 @@ SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char
 }
 
 SpeechInterface::~SpeechInterface(void)
-{
+{  
+    delete _cognitiveSubKey;
+    delete _deviceId;
+    delete requestUri;
+
     if (_response)
     {
         delete _response;
@@ -70,18 +76,15 @@ int SpeechInterface::generateGuidStr(char * guidStr)
         printf("Guid generator HTTP request failed.\r\n");
         return -1;
     }
-    string guid = _response->get_body();
-    strcpy(guidStr, guid.c_str());
-    
+
+    strcpy(guidStr, _response->get_body().c_str());   
     printf("Got new guid: %s \r\n", guidStr);
     
     return strlen(guidStr);
 }
 
 string SpeechInterface::getJwtToken()
-{
-    printf("_cognitiveSubKey = %s\r\n", _cognitiveSubKey);
-    
+{    
     HttpsRequest* tokenRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, TOKEN_REQUEST_URL);
     tokenRequest->set_header("Ocp-Apim-Subscription-Key", _cognitiveSubKey);
     _response = tokenRequest->send();
@@ -108,8 +111,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     string jwtToken = getJwtToken();
     
     // Preapre Speech Recognition API request URL
-    sprintf(requestUri, "https://speech.platform.bing.com/recognize?scenarios=smd&appid=D4D52672-91D7-4C74-8AD8-42B1D98141A5&locale=en-us&device.os=bot\
-&form=BCSSTT&version=3.0&format=json&instanceid=0E08849D-51AE-4C0E-81CD-21FE3A419868&requestid=%s", guid);
+    sprintf(requestUri, SPEECH_RECOGNITION_API_REQUEST_URL, _deviceId, guid);
     printf("%s\r\n", requestUri);
 
     HttpsRequest* speechRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, requestUri);
@@ -122,6 +124,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
 
     SpeechResponse* result ;
 
+    free(guid);
     delete speechRequest;
     
     return result;

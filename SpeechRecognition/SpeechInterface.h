@@ -8,7 +8,7 @@ typedef struct
 {
     char * status;  //success or error
     char * text;
-    float confidence;
+    double confidence;
 }SpeechResponse;
 
 class SpeechInterface
@@ -27,8 +27,8 @@ class SpeechInterface
         int sentToIotHub(char * file, int length);
 
         NetworkInterface * _wifi;
-        char _cognitiveSubKey[33];
-        char _deviceId[37];
+        char* _cognitiveSubKey;
+        char* _deviceId;
 
         char * requestUri;
         HttpResponse* _response;
