@@ -37,7 +37,7 @@ const char CERT[] =
 SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug)
 {
     _wifi = networkInterface;
-    requestUri = (char *)malloc(300);
+    _requestUri = (char *)malloc(300);
     _cognitiveSubKey = (char *)malloc(33);
     _deviceId = (char *)malloc(37);
 
@@ -54,7 +54,7 @@ SpeechInterface::~SpeechInterface(void)
 {  
     delete _cognitiveSubKey;
     delete _deviceId;
-    delete requestUri;
+    delete _requestUri;
 
     if (_response)
     {
@@ -111,10 +111,10 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     string jwtToken = getJwtToken();
     
     // Preapre Speech Recognition API request URL
-    sprintf(requestUri, SPEECH_RECOGNITION_API_REQUEST_URL, _deviceId, guid);
-    printf("%s\r\n", requestUri);
+    sprintf(_requestUri, SPEECH_RECOGNITION_API_REQUEST_URL, _deviceId, guid);
+    printf("%s\r\n", _requestUri);
 
-    HttpsRequest* speechRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, requestUri);
+    HttpsRequest* speechRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, _requestUri);
     speechRequest->set_header("Authorization", "Bearer " + jwtToken);
     speechRequest->set_header("Content-Type", "plain/text");
     
@@ -151,9 +151,9 @@ int SpeechInterface::sentToIotHub(char * file, int length)
     do {
         setupRealTime();
     } while(strlen(iothubtoken.getValue(time(NULL))) == 0);
-    sprintf(requestUri, "https://%s/devices/%s/messages/events?api-version=2016-11-14", IOTHUB_HOST, DEVICE_ID);
-    printf("<%s>\r\n", requestUri);
-    HttpsRequest* iotRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, requestUri);
+    sprintf(_requestUri, "https://%s/devices/%s/messages/events?api-version=2016-11-14", IOTHUB_HOST, DEVICE_ID);
+    printf("<%s>\r\n", _requestUri);
+    HttpsRequest* iotRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, _requestUri);
     iotRequest->set_header("Authorization", iothubtoken.getValue(time(NULL)));
     
     _response = iotRequest->send(file, length);

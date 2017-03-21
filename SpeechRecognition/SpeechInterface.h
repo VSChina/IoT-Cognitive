@@ -30,7 +30,7 @@ class SpeechInterface
         char* _cognitiveSubKey;
         char* _deviceId;
 
-        char * requestUri;
+        char * _requestUri;
         HttpResponse* _response;
         bool _debug;
 };
