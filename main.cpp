@@ -10,8 +10,11 @@
 Microphone microphone(A0);
 Serial pc(USBTX, USBRX, 115200);
 SPWFSAInterface5 spwf(D8, D2, false);
-const char *ssid = "Ruff_R0101965"; // Ruff_R0101965, laptop_jiaqi
-const char *pwd = "Password01!";
+
+const char* ssid = "Ruff_R0101965"; // Ruff_R0101965, laptop_jiaqi
+const char* pwd = "Password01!";
+const char* subscriptionKey = "a4b1a40cb1f74ab1af757a0e700fa847";
+const char* deviceId = "0E08849D-51AE-4C0E-81CD-21FE3A419868";
 
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -30,7 +33,7 @@ int main(void)
         }
     }
 
-    SpeechInterface * speechInterface = new SpeechInterface(&spwf, "a4b1a40cb1f74ab1af757a0e700fa847", true);
+    SpeechInterface * speechInterface = new SpeechInterface(&spwf, subscriptionKey, deviceId, true);
     
     int file_size;
     char * file;

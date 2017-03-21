@@ -14,7 +14,7 @@ typedef struct
 class SpeechInterface
 {
     public:
-        SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, bool debug = false);
+        SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug = false);
         virtual ~SpeechInterface(void);
 
         SpeechResponse* recognizeSpeech(char * audioFileBinary, int length);
@@ -28,6 +28,7 @@ class SpeechInterface
 
         NetworkInterface * _wifi;
         char _cognitiveSubKey[33];
+        char _deviceId[37];
 
         char * requestUri;
         HttpResponse* _response;

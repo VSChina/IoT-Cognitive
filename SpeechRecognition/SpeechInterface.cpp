@@ -35,19 +35,25 @@ const char CERT[] =
 "jkzSswF07r51XgdIGn9w/xZchMB5hbgF/X++ZRGjD8ACtPhSNzkE1akxehi/oCr0\r\nEpn3o0WC4zxe9Z2etciefC7IpJ5OCBRLbf1wbWsaY71k5h+3zvDyny67G7fyUIhz\r\n"
 "ksLi4xaNmjICq44Y3ekQEe5+NauQrz4wlHrQMz2nZQ/1/I6eYs9HRCwBXbsdtTLS\r\nR9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp\r\n-----END CERTIFICATE-----\r\n";
 
-SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, bool debug)
+SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug)
 {
     _wifi = networkInterface;
     memcpy(_cognitiveSubKey, subscriptionKey, 33);
+    memcpy(_deviceId, deviceId, 37);
     requestUri = (char *)malloc(300);
 
     _response = NULL;
     _debug = debug;
+
+    printf("subscriptionKey: %s, deviceId: %s \r\n", subscriptionKey, deviceId);
 }
 
 SpeechInterface::~SpeechInterface(void)
 {
-
+    if (_response)
+    {
+        delete _response;
+    }
 }
 
 int SpeechInterface::generateGuidStr(char * guidStr)
