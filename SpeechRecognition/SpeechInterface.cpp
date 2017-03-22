@@ -1,10 +1,8 @@
 
-#include "mbed.h"
 #include "NTPClient.h"
-#include <string>
 #include "SpeechInterface.h"
-#include "https_request.h"
 #include "SASToken.h"
+#include "picojson.h"
 
 #if _debug
 #define DBG(x, ...)  printf("[SPEECHINTERFACE: DBG] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
@@ -119,10 +117,39 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     speechRequest->set_header("Content-Type", "plain/text");
     
     _response = speechRequest->send(audioFileBinary, length);
+    if (!_response)
+    {
+        printf("Speech API request failed.");
+        return NULL;
+    }
+    
     string body = _response->get_body();
-    printf("congnitive result <%s>\r\n", body.c_str());
+    printf("congnitive result: %s\r\n", body.c_str());
 
-    SpeechResponse* result ;
+    SpeechResponse* result;
+    char * bodyStr = (char*)body.c_str();
+
+    /*
+    // Parse Json result to SpeechResponse object
+    picojson::value json;
+    string err = picojson::parse(json, bodyStr, bodyStr + strlen(bodyStr));
+    if (err != "")
+    {
+        printf("Parse json response error: %s\r\n", err.c_str());
+        return NULL;
+    }
+
+    speechResponse->status = (char *)json.get("header").get("status").get<string>().c_str();
+
+    picojson::array results = json.get("results").get<picojson::array>();
+    picojson::array::iterator iter = results.begin();  
+    speechResponse->text = (char *)(*iter).get("name").get<string>().c_str();
+    speechResponse->confidence = (*iter).get("confidence").get<double>();
+
+    printf("status = %s\r\n", speechResponse->status);
+    printf("speech text = %s\r\n", speechResponse->text);
+    printf("confidence = %f\r\n", speechResponse->confidence);
+    */
 
     free(guid);
     delete speechRequest;

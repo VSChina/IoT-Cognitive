@@ -3,6 +3,8 @@
 
 #include "mbed.h"
 #include "http_request.h"
+#include "https_request.h"
+
 
 typedef struct
 {
