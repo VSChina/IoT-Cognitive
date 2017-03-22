@@ -120,7 +120,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     _response = speechRequest->send(audioFileBinary, length);
     if (!_response)
     {
-        printf("Speech API request failed.");
+        printf("Speech API request failed.\r\n");
         return NULL;
     }
     
@@ -140,9 +140,10 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     }
 
     speechResponse->status = (char *)json.get("header").get("status").get<string>().c_str();
-    if (strcmp(speechResponse->status, "error") == 0)
+    if (strcmp(speechResponse->status, "success") != 0)
     {
         printf("Unable to recognize the speech.\r\n");
+        return NULL;
     }
 
     picojson::array results = json.get("results").get<picojson::array>();
