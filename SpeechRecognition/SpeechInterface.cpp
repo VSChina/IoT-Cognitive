@@ -18,7 +18,7 @@
                                             "&form=BCSSTT&version=3.0&format=json&instanceid=%s&requestid=%s"
 
 #define GUID_GENERATOR_HTTP_REQUEST_URL  "http://www.fileformat.info/tool/guid.htm?count=1&format=text&hyphen=true"
-#define TOKEN_REQUEST_URL  "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
+#define TOKEN_REQUEST_URL "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 
 const char CERT[] = 
 "-----BEGIN CERTIFICATE-----\r\nMIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJ\r\n"
@@ -78,6 +78,7 @@ int SpeechInterface::generateGuidStr(char * guidStr)
     strcpy(guidStr, _response->get_body().c_str());   
     printf("Got new guid: %s \r\n", guidStr);
     
+    //free(guidRequest);
     return strlen(guidStr);
 }
 
@@ -110,7 +111,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     
     // Preapre Speech Recognition API request URL
     sprintf(_requestUri, SPEECH_RECOGNITION_API_REQUEST_URL, _deviceId, guid);
-    printf("%s\r\n", _requestUri);
+    printf("recognizeSpeech request URL: %s\r\n", _requestUri);
 
     HttpsRequest* speechRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, _requestUri);
     speechRequest->set_header("Authorization", "Bearer " + jwtToken);
@@ -139,16 +140,16 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     }
 
     speechResponse->status = (char *)json.get("header").get("status").get<string>().c_str();
+    if (strcmp(speechResponse->status, "error") == 0)
+    {
+        printf("Unable to recognize the speech.\r\n");
+    }
 
     picojson::array results = json.get("results").get<picojson::array>();
     picojson::array::iterator iter = results.begin();  
     speechResponse->text = (char *)(*iter).get("name").get<string>().c_str();
     char * confidenceStr = (char *)(*iter).get("confidence").get<string>().c_str();
-    response->confidence = atof(confidenceStr);
-
-    printf("status = %s\r\n", speechResponse->status);
-    printf("speech text = %s\r\n", speechResponse->text);
-    printf("confidence = %f\r\n", speechResponse->confidence);
+    speechResponse->confidence = atof(confidenceStr);
 
     free(guid);
     delete speechRequest;
