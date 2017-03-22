@@ -126,10 +126,9 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     string body = _response->get_body();
     printf("congnitive result: %s\r\n", body.c_str());
 
-    SpeechResponse* result;
+    SpeechResponse* speechResponse;
     char * bodyStr = (char*)body.c_str();
 
-    /*
     // Parse Json result to SpeechResponse object
     picojson::value json;
     string err = picojson::parse(json, bodyStr, bodyStr + strlen(bodyStr));
@@ -149,12 +148,11 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     printf("status = %s\r\n", speechResponse->status);
     printf("speech text = %s\r\n", speechResponse->text);
     printf("confidence = %f\r\n", speechResponse->confidence);
-    */
 
     free(guid);
     delete speechRequest;
     
-    return result;
+    return speechResponse;
 }
 
 int SpeechInterface::convertTextToSpeech(char * text, int length, char * audioFileBinary, int audioLen)
