@@ -143,7 +143,8 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     picojson::array results = json.get("results").get<picojson::array>();
     picojson::array::iterator iter = results.begin();  
     speechResponse->text = (char *)(*iter).get("name").get<string>().c_str();
-    speechResponse->confidence = (*iter).get("confidence").get<double>();
+    char * confidenceStr = (char *)(*iter).get("confidence").get<string>().c_str();
+    response->confidence = atof(confidenceStr);
 
     printf("status = %s\r\n", speechResponse->status);
     printf("speech text = %s\r\n", speechResponse->text);
