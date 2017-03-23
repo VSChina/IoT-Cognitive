@@ -40,10 +40,11 @@ void json_c_sample() {
     json_object_object_get_ex(responseObj, "results", &subObj);
     array_list * array = json_object_get_array(valueObj);
     bestResult = json_object_array_get_idx(subObj, 0);
+    json_object_object_get_ex(bestResult, "confidence", &valueObj);
 
-    json_object_object_get_ex(subObj, "confidence", &valueObj);
-    speechResponse->confidence = json_object_get_double(valueObj);
-    printf("confidence = %s\r\n", speechResponse->confidence);
+    speechResponse->confidence = (double)json_object_get_double(valueObj);
+    printf("confidence = %f\r\n", speechResponse->confidence);
+ 
 
     free(responseObj);
     free(subObj);

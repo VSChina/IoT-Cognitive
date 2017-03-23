@@ -152,18 +152,25 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     speechResponse->text =  (char *)json_object_get_string(valueObj);
     printf("speech text = %s\r\n", speechResponse->text);
 
-    // parse status value from result[0]->confidence
+    // parse status value from header->lexical
+    json_object_object_get_ex(subObj, "lexical", &valueObj);
+    speechResponse->text =  (char *)json_object_get_string(valueObj);
+    printf("speech text = %s\r\n", speechResponse->text);
+
+    // parse status value from header->lexical
     json_object_object_get_ex(responseObj, "results", &subObj);
     array_list * array = json_object_get_array(valueObj);
     bestResult = json_object_array_get_idx(subObj, 0);
+    json_object_object_get_ex(bestResult, "confidence", &valueObj);
 
-    json_object_object_get_ex(subObj, "confidence", &valueObj);
-    speechResponse->confidence = json_object_get_double(valueObj);
-    printf("confidence = %s\r\n", speechResponse->confidence);
+    speechResponse->confidence = (double)json_object_get_double(valueObj);
+    printf("confidence = %f\r\n", speechResponse->confidence);
+ 
 
     free(responseObj);
     free(subObj);
     free(valueObj);
+    free(bestResult);
     
     free(guid);
     delete speechRequest;
