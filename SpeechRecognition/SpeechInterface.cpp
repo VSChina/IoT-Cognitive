@@ -101,6 +101,8 @@ string SpeechInterface::getJwtToken()
 
 SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int length)
 {
+    SpeechResponse *speechResponse = new SpeechResponse();
+
     // Generate a new guid for cognitive service API request
     char * guid = (char *)malloc(33);
     generateGuidStr(guid);
@@ -126,52 +128,43 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     string body = _response->get_body();
     printf("congnitive result: %s\r\n", body.c_str());
 
-    SpeechResponse* speechResponse = new SpeechResponse();
     char * bodyStr = (char*)body.c_str();
 
     // Parse Jso n result to SpeechResponse object
     struct json_object *responseObj, *subObj, *valueObj, *bestResult;
 
     responseObj = json_tokener_parse(bodyStr);
-    printf("jobj from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
+    printf("JSON object from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
 
      // parse status value from header->status
     json_object_object_get_ex(responseObj, "header", &subObj);
     json_object_object_get_ex(subObj, "status", &valueObj);
     speechResponse->status =  (char *)json_object_get_string(valueObj);
-    printf("status = %s\r\n", speechResponse->status);
+    //printf("status = %s\r\n", speechResponse->status);
 
     if (strcmp(speechResponse->status, "error") == 0)
     {
         printf("Parse speech error.");
-        return NULL;
     }
+    else
+    {
+        // parse status value from header->lexical
+        json_object_object_get_ex(subObj, "lexical", &valueObj);
+        speechResponse->text =  (char *)json_object_get_string(valueObj);
+        //printf("speech text = %s\r\n", speechResponse->text);
 
-    // parse status value from header->lexical
-    json_object_object_get_ex(subObj, "lexical", &valueObj);
-    speechResponse->text =  (char *)json_object_get_string(valueObj);
-    printf("speech text = %s\r\n", speechResponse->text);
+        // parse confidence value from results[0]->confidence
+        json_object_object_get_ex(responseObj, "results", &subObj);
+        array_list * array = json_object_get_array(valueObj);
+        bestResult = json_object_array_get_idx(subObj, 0);
+        json_object_object_get_ex(bestResult, "confidence", &valueObj);
 
-    // parse status value from header->lexical
-    json_object_object_get_ex(subObj, "lexical", &valueObj);
-    speechResponse->text =  (char *)json_object_get_string(valueObj);
-    printf("speech text = %s\r\n", speechResponse->text);
-
-    // parse status value from header->lexical
-    json_object_object_get_ex(responseObj, "results", &subObj);
-    array_list * array = json_object_get_array(valueObj);
-    bestResult = json_object_array_get_idx(subObj, 0);
-    json_object_object_get_ex(bestResult, "confidence", &valueObj);
-
-    speechResponse->confidence = (double)json_object_get_double(valueObj);
-    printf("confidence = %f\r\n", speechResponse->confidence);
- 
-
-    free(responseObj);
-    free(subObj);
-    free(valueObj);
-    free(bestResult);
+        speechResponse->confidence = (double)json_object_get_double(valueObj);
+        //printf("confidence = %f\r\n", speechResponse->confidence);
+    }   
     
+    printf("speechResponse = %p\r\n", speechResponse);
+
     free(guid);
     delete speechRequest;
     
