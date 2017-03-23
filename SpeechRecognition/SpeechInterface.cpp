@@ -2,7 +2,7 @@
 #include "NTPClient.h"
 #include "SpeechInterface.h"
 #include "SASToken.h"
-#include "picojson.h"
+#include <json.h>
 
 #if _debug
 #define DBG(x, ...)  printf("[SPEECHINTERFACE: DBG] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
@@ -35,7 +35,7 @@ const char CERT[] =
 SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug)
 {
     _wifi = networkInterface;
-    _requestUri = (char *)malloc(300);
+    _requestUri = (char *)malloc(260);
     _cognitiveSubKey = (char *)malloc(33);
     _deviceId = (char *)malloc(37);
 
@@ -78,7 +78,6 @@ int SpeechInterface::generateGuidStr(char * guidStr)
     strcpy(guidStr, _response->get_body().c_str());   
     printf("Got new guid: %s \r\n", guidStr);
     
-    //free(guidRequest);
     return strlen(guidStr);
 }
 
@@ -96,6 +95,7 @@ string SpeechInterface::getJwtToken()
     string token = _response->get_body();
     printf("Got JWT token: %s\r\n", token.c_str());
     
+    delete &token;
     delete tokenRequest;  
     return token;
 }
@@ -130,27 +130,24 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     SpeechResponse* speechResponse;
     char * bodyStr = (char*)body.c_str();
 
-    // Parse Json result to SpeechResponse object
-    picojson::value json;
-    string err = picojson::parse(json, bodyStr, bodyStr + strlen(bodyStr));
-    if (err != "")
-    {
-        printf("Parse json response error: %s\r\n", err.c_str());
-        return NULL;
-    }
+    // Parse Jso n result to SpeechResponse object
+    struct json_object *responseObj, *subObj, *valueObj;
 
-    speechResponse->status = (char *)json.get("header").get("status").get<string>().c_str();
-    if (strcmp(speechResponse->status, "error") == 0)
-    {
-        printf("Unable to recognize the speech.\r\n");
-    }
+    responseObj = json_tokener_parse(bodyStr);
+    printf("jobj from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
 
-    picojson::array results = json.get("results").get<picojson::array>();
-    picojson::array::iterator iter = results.begin();  
-    speechResponse->text = (char *)(*iter).get("name").get<string>().c_str();
-    char * confidenceStr = (char *)(*iter).get("confidence").get<string>().c_str();
-    speechResponse->confidence = atof(confidenceStr);
+    // parse status value from header->status
+    json_object_object_get_ex(responseObj, "header", &subObj);
+    json_object_object_get_ex(subObj, "status", &valueObj);
+    speechResponse->status =  (char *)json_object_get_string(valueObj);
+    printf("status = %s\r\n", speechResponse->status);
 
+    // parse status value from header->status
+    json_object_object_get_ex(responseObj, "header", &subObj);
+    json_object_object_get_ex(subObj, "lexical", &valueObj);
+    speechResponse->text =  (char *)json_object_get_string(valueObj);
+    printf("speech text = %s\r\n", speechResponse->text); 
+    
     free(guid);
     delete speechRequest;
     
@@ -178,6 +175,7 @@ int SpeechInterface::sentToIotHub(char * file, int length)
     do {
         setupRealTime();
     } while(strlen(iothubtoken.getValue(time(NULL))) == 0);
+
     sprintf(_requestUri, "https://%s/devices/%s/messages/events?api-version=2016-11-14", IOTHUB_HOST, DEVICE_ID);
     printf("<%s>\r\n", _requestUri);
     HttpsRequest* iotRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, _requestUri);
