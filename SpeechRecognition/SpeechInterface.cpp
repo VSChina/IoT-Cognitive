@@ -120,7 +120,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     _response = speechRequest->send(audioFileBinary, length);
     if (!_response)
     {
-        printf("Speech API request failed.");
+        printf("Speech API request failed.\r\n");
         return NULL;
     }
     
