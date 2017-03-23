@@ -95,7 +95,6 @@ string SpeechInterface::getJwtToken()
     string token = _response->get_body();
     printf("Got JWT token: %s\r\n", token.c_str());
     
-    delete &token;
     delete tokenRequest;  
     return token;
 }
@@ -127,7 +126,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     string body = _response->get_body();
     printf("congnitive result: %s\r\n", body.c_str());
 
-    SpeechResponse* speechResponse;
+    SpeechResponse* speechResponse = new SpeechResponse();
     char * bodyStr = (char*)body.c_str();
 
     // Parse Jso n result to SpeechResponse object

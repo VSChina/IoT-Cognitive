@@ -3,9 +3,9 @@
 #include "SpeechInterface.h"
 #include <json.h>
 
-Microphone microphone(A0);
+Microphone microphone(A0, 2, 8000);
 Serial pc(USBTX, USBRX, 115200);
-SPWFSAInterface5 spwf(D8, D2, false);
+SPWFSAInterface5 spwf(D1, D0, false);
 
 const char* ssid = "Ruff_R0101965"; // Ruff_R0101965, laptop_jiaqi
 const char* pwd = "Password01!";
