@@ -131,22 +131,40 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     char * bodyStr = (char*)body.c_str();
 
     // Parse Jso n result to SpeechResponse object
-    struct json_object *responseObj, *subObj, *valueObj;
+    struct json_object *responseObj, *subObj, *valueObj, *bestResult;
 
     responseObj = json_tokener_parse(bodyStr);
     printf("jobj from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
 
-    // parse status value from header->status
+     // parse status value from header->status
     json_object_object_get_ex(responseObj, "header", &subObj);
     json_object_object_get_ex(subObj, "status", &valueObj);
     speechResponse->status =  (char *)json_object_get_string(valueObj);
     printf("status = %s\r\n", speechResponse->status);
 
-    // parse status value from header->status
-    json_object_object_get_ex(responseObj, "header", &subObj);
+    if (strcmp(speechResponse->status, "error") == 0)
+    {
+        printf("Parse speech error.");
+        return NULL;
+    }
+
+    // parse status value from header->lexical
     json_object_object_get_ex(subObj, "lexical", &valueObj);
     speechResponse->text =  (char *)json_object_get_string(valueObj);
-    printf("speech text = %s\r\n", speechResponse->text); 
+    printf("speech text = %s\r\n", speechResponse->text);
+
+    // parse status value from result[0]->confidence
+    json_object_object_get_ex(responseObj, "results", &subObj);
+    array_list * array = json_object_get_array(valueObj);
+    bestResult = json_object_array_get_idx(subObj, 0);
+
+    json_object_object_get_ex(subObj, "confidence", &valueObj);
+    speechResponse->confidence = json_object_get_double(valueObj);
+    printf("confidence = %s\r\n", speechResponse->confidence);
+
+    free(responseObj);
+    free(subObj);
+    free(valueObj);
     
     free(guid);
     delete speechRequest;

@@ -16,7 +16,7 @@ const char* deviceId = "0E08849D-51AE-4C0E-81CD-21FE3A419868";
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 void json_c_sample() {
-	struct json_object *responseObj, *subObj, *valueObj;
+	struct json_object *responseObj, *subObj, *valueObj, *bestResult;
 
     char *jsonsoure = "{\"version\":\"3.0\",\"header\":{\"status\":\"success\",\"scenario\":\"smd\",\"name\":\"Close the window.\",\"lexical\":\"close the window\",\"properties\":{\"requestid\":\"96d8c7a2-18d7-4d0c-a49c-4f08a75373c7\",\"MIDCONF\":\"1\"}},\"results\":[{\"scenario\":\"smd\",\"name\":\"Close the window.\",\"lexical\":\"close the window\",\"confidence\":0.8521699,\"properties\":{\"MIDCONF\":\"1\"}}]}";
     
@@ -31,16 +31,28 @@ void json_c_sample() {
     speechResponse->status =  (char *)json_object_get_string(valueObj);
     printf("status = %s\r\n", speechResponse->status);
 
-    // parse status value from header->status
-    json_object_object_get_ex(responseObj, "header", &subObj);
+    // parse status value from header->lexical
     json_object_object_get_ex(subObj, "lexical", &valueObj);
     speechResponse->text =  (char *)json_object_get_string(valueObj);
-    printf("speech text = %s\r\n", speechResponse->text);    
+    printf("speech text = %s\r\n", speechResponse->text);
+
+    // parse status value from header->lexical
+    json_object_object_get_ex(responseObj, "results", &subObj);
+    array_list * array = json_object_get_array(valueObj);
+    bestResult = json_object_array_get_idx(subObj, 0);
+
+    json_object_object_get_ex(subObj, "confidence", &valueObj);
+    speechResponse->confidence = json_object_get_double(valueObj);
+    printf("confidence = %s\r\n", speechResponse->confidence);
+
+    free(responseObj);
+    free(subObj);
+    free(valueObj);
 }
 
 int main(void)
 {
-    //json_c_sample();
+    json_c_sample();
 
     printf("Start...\n");
     while(true) {
