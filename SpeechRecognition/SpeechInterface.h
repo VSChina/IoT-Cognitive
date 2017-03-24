@@ -13,6 +13,7 @@ typedef struct
     double confidence;
 }SpeechResponse;
 
+
 class SpeechInterface
 {
     public:
