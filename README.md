@@ -1,4 +1,4 @@
-# Speech Recognition Library
+﻿# Speech Recognition Library
 
 Speech recognition Library provides voice interaction to let you control your device with your voice.
 
@@ -29,12 +29,12 @@ typedef struct
 ```
 
 ## Sample Usage:
-This Sample code can be run on STM32 Nucleo_F412RE board with SPWF01SA wifi module.
+This Sample code can be run on STM32 Nucleo_F412ZG board with SPWF01SA wifi module.
 
 ``` cpp
 Microphone microphone(A0, 2, 8000);
 Serial pc(USBTX, USBRX, 115200);
-SPWFSAInterface5 spwf(D8, D2, false);
+SPWFSAInterface5 spwf(D1, D0, false);
 
 const char* ssid = "[your wifi ssid]";
 const char* pwd = "[your wifi password]";
@@ -67,7 +67,6 @@ int main(void)
         if(new_pb == 0 && old_pb == 1) {
             printf("start record...\r\n");
             audio_file = microphone.getWav(&audio_size);
-            printf("//%d\r\n", audio_size);
 
             SpeechResponse* speechResponse = speechInterface->recognizeSpeech(audio_file, audio_size);
         }

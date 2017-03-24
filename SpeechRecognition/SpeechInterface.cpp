@@ -1,7 +1,6 @@
 
 #include "NTPClient.h"
 #include "SpeechInterface.h"
-#include "SASToken.h"
 #include <json.h>
 
 #define SPEECH_RECOGNITION_API_REQUEST_URL  ""                                                                  \
@@ -176,25 +175,3 @@ int SpeechInterface::setupRealTime(void)
     } while (result != 0);
     return result;
 }
-
-int SpeechInterface::sentToIotHub(char * file, int length)
-{
-    SASToken iothubtoken;
-    do {
-        setupRealTime();
-    } while(strlen(iothubtoken.getValue(time(NULL))) == 0);
-
-    sprintf(_requestUri, "https://%s/devices/%s/messages/events?api-version=2016-11-14", IOTHUB_HOST, DEVICE_ID);
-    printf("<%s>\r\n", _requestUri);
-    HttpsRequest* iotRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, _requestUri);
-    iotRequest->set_header("Authorization", iothubtoken.getValue(time(NULL)));
-    
-    _response = iotRequest->send(file, length);
-    string result = _response->get_body();
-    printf("iot hub result <%s>\r\n", result.c_str());
-    
-    delete iotRequest;
-    return 0;
-}
-
-

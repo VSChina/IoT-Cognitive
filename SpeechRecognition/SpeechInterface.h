@@ -27,7 +27,6 @@ class SpeechInterface
         int generateGuidStr(char * guidStr);
         string getJwtToken();
         int setupRealTime(void);
-        int sentToIotHub(char * file, int length);
 
         NetworkInterface * _wifi;
         char* _cognitiveSubKey;
