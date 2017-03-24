@@ -4,13 +4,6 @@
 #include "SASToken.h"
 #include <json.h>
 
-#if _debug
-#define DBG(x, ...)  printf("[SPEECHINTERFACE: DBG] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
-#define WARN(x, ...) printf("[SPEECHINTERFACE: WARN] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
-#define ERR(x, ...)  printf("[SPEECHINTERFACE: ERR] %s \t[%s,%d]\r\n", x, ##__VA_ARGS__, __FILE__, __LINE__); 
-#endif
-
-#define GUID_SIZE 36
 #define SPEECH_RECOGNITION_API_REQUEST_URL  ""                                                                  \
                                             "https://speech.platform.bing.com/recognize?"                       \
                                             "scenarios=smd&appid=D4D52672-91D7-4C74-8AD8-42B1D98141A5"          \
@@ -140,7 +133,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     json_object_object_get_ex(responseObj, "header", &subObj);
     json_object_object_get_ex(subObj, "status", &valueObj);
     speechResponse->status =  (char *)json_object_get_string(valueObj);
-    //printf("status = %s\r\n", speechResponse->status);
+    printf("status = %s\r\n", speechResponse->status);
 
     if (strcmp(speechResponse->status, "error") == 0)
     {
@@ -151,7 +144,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
         // parse status value from header->lexical
         json_object_object_get_ex(subObj, "lexical", &valueObj);
         speechResponse->text =  (char *)json_object_get_string(valueObj);
-        //printf("speech text = %s\r\n", speechResponse->text);
+        printf("speech text = %s\r\n", speechResponse->text);
 
         // parse confidence value from results[0]->confidence
         json_object_object_get_ex(responseObj, "results", &subObj);
@@ -160,10 +153,8 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
         json_object_object_get_ex(bestResult, "confidence", &valueObj);
 
         speechResponse->confidence = (double)json_object_get_double(valueObj);
-        //printf("confidence = %f\r\n", speechResponse->confidence);
-    }   
-    
-    printf("speechResponse = %p\r\n", speechResponse);
+        printf("confidence = %f\r\n", speechResponse->confidence);
+    }
 
     free(guid);
     delete speechRequest;

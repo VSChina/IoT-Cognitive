@@ -50,6 +50,7 @@ SpeechResponse* json_c_sample()
 
 int main(void)
 {
+    // json_c lib test
     SpeechResponse* ret = json_c_sample();
     printf("json_c_sample result:\r\n");
     printf("status = %s\r\n", ret->status);

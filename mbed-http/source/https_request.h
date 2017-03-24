@@ -246,10 +246,6 @@ public:
 
         // Set up a receive buffer (on the heap)
         uint8_t* recv_buffer = (uint8_t*)malloc(HTTP_RECEIVE_BUFFER_SIZE);
-        if (recv_buffer == NULL)
-        {
-            printf("malloc failed for 'recv_buffer'\r\n");
-        }
 
         /* Read data out of the socket */
         while ((ret = mbedtls_ssl_read(&_ssl, (unsigned char *) recv_buffer, HTTP_RECEIVE_BUFFER_SIZE)) > 0) {
@@ -258,9 +254,6 @@ public:
             recv_buffer[_bpos] = 0;
 
             size_t nparsed = parser.execute((const char*)recv_buffer, _bpos);
-
-            printf("#DEBUG# recv_buffer: %s, nparsed = %d, _bpos = %d\r\n", (const char*)recv_buffer, nparsed,  _bpos);
-
             if (nparsed != _bpos) {
                 print_mbedtls_error("parser_error", nparsed);
                 // parser error...
