@@ -10,6 +10,10 @@ This library is still being developed, and more cognitive APIs will be supported
 - *Text-To-Speech API*: uses a speech synthesis engine (voice) to convert a text string into spoken words. The input string can be either basic, unadorned text or more complex Speech Synthesis Markup Language (SSML).
 - *Speaker Identification API*: automatically identify the person speaking in an audio file. The audio of the unknown speaker, together with the prospective group of speakers, is provided during recognition. The input voice is compared against all speakers in order to determine whose voice it is, and if there is a match found, the identity of the speaker is returned.
 
+## Prerequisite
+As we leverage the Microsoft Cognitive Service to perform the speech recognition. In order to use this library, you need to register for [Microsoft Cognitive Service](https://www.microsoft.com/cognitive-services/) and get an subscription key for the Bing Speech API and Speaker Recognition API.
+
+[![Cognitive Service Subscription Key](https://doliotstorage.blob.core.windows.net/public-resources/cognitiveSubKey.JPG)]
 
 ## API Definition
 - **recognizeSpeech** API
