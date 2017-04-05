@@ -4,7 +4,6 @@
 #include "mbed.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define DURATION 2
 #define DEFAULT_SAMPLE_RATE 8000
@@ -34,7 +33,7 @@ class Microphone
 
     private:
         Ticker _ticker;
-        AnalogIn _microphone;
+//        AnalogIn _microphone;
         uint32_t _duration;
         uint32_t _sample_rate;
         uint16_t _bit_depth;

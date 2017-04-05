@@ -2,7 +2,7 @@
 
 void Microphone::readMic() {
     if (_recording >= _wavFile + _file_size) return;
-    int x = _microphone.read_u16();
+    int x = 0; //_microphone.read_u16();
     int y = x & 255;
     x >>= 8;
     if (_bit_depth == 16) {
@@ -14,7 +14,7 @@ void Microphone::readMic() {
 }
 
 Microphone::Microphone(PinName microphone, uint32_t duration, uint32_t sample_rate, uint16_t bit_depth, uint16_t channels) 
-    : _microphone(microphone)
+//    : _microphone(microphone)
 {
     _ticker.attach(callback(this, &Microphone::readMic), 1.0 / sample_rate);
     _duration = duration;

@@ -2,9 +2,7 @@
 #define __SPEECH_INTERFACE_OS5_H__
 
 #include "mbed.h"
-#include "http_request.h"
-#include "https_request.h"
-
+#include "WString.h"
 
 typedef struct
 {
@@ -25,7 +23,7 @@ class SpeechInterface
 
     private:
         int generateGuidStr(char * guidStr);
-        string getJwtToken();
+        char* getJwtToken();
         int setupRealTime(void);
 
         NetworkInterface * _wifi;
@@ -33,7 +31,6 @@ class SpeechInterface
         char* _deviceId;
 
         char * _requestUri;
-        HttpResponse* _response;
         bool _debug;
 };
 

@@ -1,6 +1,8 @@
 
 #include "NTPClient.h"
 #include "SpeechInterface.h"
+#include "http_request.h"
+#include "https_request.h"
 #include <json.h>
 
 #define SPEECH_RECOGNITION_API_REQUEST_URL  ""                                                                  \
@@ -34,7 +36,6 @@ SpeechInterface::SpeechInterface(NetworkInterface * networkInterface, const char
     memcpy(_cognitiveSubKey, subscriptionKey, 33);
     memcpy(_deviceId, deviceId, 37);
     
-    _response = NULL;
     _debug = debug;
 
     printf("subscriptionKey: %s, deviceId: %s \r\n", subscriptionKey, deviceId);
@@ -45,22 +46,26 @@ SpeechInterface::~SpeechInterface(void)
     delete _cognitiveSubKey;
     delete _deviceId;
     delete _requestUri;
-
-    if (_response)
-    {
-        delete _response;
-    }
 }
 
 int SpeechInterface::generateGuidStr(char * guidStr)
 {
+        TCPSocket socket;
+        printf("will open socket\r\n");
+        int open_result = socket.open(_wifi);
+        printf("open socket done %d\r\n", open_result);
     if (guidStr == NULL)
     {
         return -1;
     }
 
     HttpRequest* guidRequest = new HttpRequest(_wifi, HTTP_GET, GUID_GENERATOR_HTTP_REQUEST_URL);
-    _response = guidRequest->send();
+    if (guidRequest == NULL) {
+        printf("guidRequest is null\r\n");
+    } else {
+        printf("guidRequest is not null\r\n");
+    }
+    HttpResponse* _response = guidRequest->send();
     if (!_response)
     {
         printf("Guid generator HTTP request failed.\r\n");
@@ -73,11 +78,11 @@ int SpeechInterface::generateGuidStr(char * guidStr)
     return strlen(guidStr);
 }
 
-string SpeechInterface::getJwtToken()
+char* SpeechInterface::getJwtToken()
 {    
     HttpsRequest* tokenRequest = new HttpsRequest(_wifi, CERT, HTTP_POST, TOKEN_REQUEST_URL);
     tokenRequest->set_header("Ocp-Apim-Subscription-Key", _cognitiveSubKey);
-    _response = tokenRequest->send();
+    HttpResponse* _response = tokenRequest->send();
     if (!_response)
     {
         printf("HttpRequest failed (error code %d)\n", tokenRequest->get_error());
@@ -88,15 +93,18 @@ string SpeechInterface::getJwtToken()
     printf("Got JWT token: %s\r\n", token.c_str());
     
     delete tokenRequest;  
-    return token;
+    return (char *)token.c_str();
 }
 
 SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int length)
 {
-    SpeechResponse *speechResponse = new SpeechResponse();
+    printf("file length : %d\r\n", length);
 
     // Generate a new guid for cognitive service API request
     char * guid = (char *)malloc(33);
+    if (guid == NULL) {
+        printf("guid is null\r\n");
+    } 
     generateGuidStr(guid);
 
     // Generate a JWT token for cognitove service authentication
@@ -110,7 +118,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     speechRequest->set_header("Authorization", "Bearer " + jwtToken);
     speechRequest->set_header("Content-Type", "plain/text");
     
-    _response = speechRequest->send(audioFileBinary, length);
+    HttpResponse* _response = speechRequest->send(audioFileBinary, length);
     if (!_response)
     {
         printf("Speech API request failed.\r\n");
@@ -122,6 +130,10 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
 
     char * bodyStr = (char*)body.c_str();
 
+    SpeechResponse *speechResponse = new SpeechResponse();
+    if (speechResponse == NULL) {
+        printf("SpeechResponse is null \r\n");
+    }
     // Parse Jso n result to SpeechResponse object
     struct json_object *responseObj, *subObj, *valueObj, *bestResult;
 
