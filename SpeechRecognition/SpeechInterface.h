@@ -2,7 +2,6 @@
 #define __SPEECH_INTERFACE_OS5_H__
 
 #include "mbed.h"
-#include "WString.h"
 
 typedef struct
 {
@@ -15,18 +14,16 @@ typedef struct
 class SpeechInterface
 {
     public:
-        SpeechInterface(NetworkInterface * networkInterface, const char * subscriptionKey, const char * deviceId, bool debug = false);
+        SpeechInterface(const char * subscriptionKey, const char * deviceId, bool debug = false);
         virtual ~SpeechInterface(void);
 
         SpeechResponse* recognizeSpeech(char * audioFileBinary, int length);
         int convertTextToSpeech(char * text, int length, char * audioFileBinary, int audioLen); 
 
     private:
-        int generateGuidStr(char * guidStr);
+        char* generateGuidStr();
         char* getJwtToken();
-        int setupRealTime(void);
 
-        NetworkInterface * _wifi;
         char* _cognitiveSubKey;
         char* _deviceId;
 
