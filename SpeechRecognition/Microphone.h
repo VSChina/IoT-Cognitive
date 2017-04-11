@@ -29,6 +29,7 @@ class Microphone
 {
     public:
         Microphone(PinName microphone, uint32_t duration = DURATION, uint32_t sample_rate = DEFAULT_SAMPLE_RATE, uint16_t bit_depth = DEFAULT_BITS_PER_SAMPLE, uint16_t channels = MONO);
+        void startRecord();
         char* getWav(int *file_size);
 
     private:

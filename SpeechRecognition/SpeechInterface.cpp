@@ -22,7 +22,7 @@ SpeechInterface::SpeechInterface(const char * subscriptionKey, const char * devi
     
     _debug = debug;
 
-    printf("subscriptionKey: %s, deviceId: %s \r\n", subscriptionKey, deviceId);
+    if (_debug) printf("subscriptionKey: %s, deviceId: %s \r\n", subscriptionKey, deviceId);
 }
 
 SpeechInterface::~SpeechInterface(void)
@@ -38,13 +38,13 @@ char* SpeechInterface::generateGuidStr()
     Http_Response* _response = guidRequest.send();
     if (_response == NULL)
     {
-        printf("Guid generator HTTP request failed.\r\n");
+        if (_debug) printf("Guid generator HTTP request failed.\r\n");
         return NULL;
     }
 
     char* guidStr = (char *)malloc(37);
     strcpy(guidStr, _response->body);
-    printf("Got new guid: <%s> message <%s>\r\n", guidStr, _response -> status_message);
+    if (_debug) printf("Got new guid: <%s> message <%s>\r\n", guidStr, _response -> status_message);
     delete _response;
     return guidStr;
 }
@@ -56,20 +56,20 @@ char* SpeechInterface::getJwtToken()
     Http_Response* _response = tokenRequest.send();
     if (!_response)
     {
-        printf("HttpRequest failed (error code %d)\n", tokenRequest.get_error());
+        if (_debug) printf("HttpRequest failed (error code %d)\n", tokenRequest.get_error());
         return NULL;
     }
 
     char* token = (char *)malloc(strlen(_response->body) + 8);
     sprintf(token, "Bearer %s", _response->body);
-    printf("Got JwtToken: <%s> message <%s>\r\n", token, _response -> status_message);
+    if (_debug) printf("Got JwtToken: <%s> message <%s>\r\n", token, _response -> status_message);
     delete _response;
     return token;
 }
 
 SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int length)
 {
-    printf("file length : %d\r\n", length);
+    if (_debug) printf("file length : %d\r\n", length);
 
     // Generate a new guid for cognitive service API request
     char* guid = generateGuidStr();
@@ -79,7 +79,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     
     // Preapre Speech Recognition API request URL
     sprintf(_requestUri, SPEECH_RECOGNITION_API_REQUEST_URL, _deviceId, guid);
-    printf("recognizeSpeech request URL: %s\r\n", _requestUri);
+    if (_debug) printf("recognizeSpeech request URL: %s\r\n", _requestUri);
 
     HTTPClient speechRequest = HTTPClient(HTTP_POST, (const char*)_requestUri);
     speechRequest.set_header("Content-Type", "plain/text");
@@ -88,40 +88,40 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     Http_Response* _response = speechRequest.send(audioFileBinary, length);
     if (!_response)
     {
-        printf("Speech API request failed (error code %d).\r\n", speechRequest.get_error());
+        if (_debug) printf("Speech API request failed (error code %d).\r\n", speechRequest.get_error());
         return NULL;
     }
     char* bodyStr = (char*)malloc(strlen(_response->body) + 1);
     strcpy(bodyStr, _response->body);
-    printf("congnitive result: %s\r\n", bodyStr);
+    if (_debug) printf("congnitive result: %s\r\n", bodyStr);
     delete _response;
 
     SpeechResponse *speechResponse = new SpeechResponse();
     if (speechResponse == NULL) {
-        printf("SpeechResponse is null \r\n");
+        if (_debug) printf("SpeechResponse is null \r\n");
+        return NULL;
     }
     // Parse Jso n result to SpeechResponse object
     struct json_object *responseObj, *subObj, *valueObj, *bestResult;
 
     responseObj = json_tokener_parse(bodyStr);
-    printf("JSON object from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
+    if (_debug) printf("JSON object from response:\n%s\n", json_object_to_json_string_ext(responseObj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
 
      // parse status value from header->status
     json_object_object_get_ex(responseObj, "header", &subObj);
     json_object_object_get_ex(subObj, "status", &valueObj);
     speechResponse->status =  (char *)json_object_get_string(valueObj);
-    printf("status = %s\r\n", speechResponse->status);
 
     if (strcmp(speechResponse->status, "error") == 0)
     {
-        printf("Parse speech error.");
+        if (_debug) printf("Audio recognize failed.");
+        
     }
     else
     {
         // parse status value from header->lexical
         json_object_object_get_ex(subObj, "lexical", &valueObj);
         speechResponse->text =  (char *)json_object_get_string(valueObj);
-        printf("speech text = %s\r\n", speechResponse->text);
 
         // parse confidence value from results[0]->confidence
         json_object_object_get_ex(responseObj, "results", &subObj);
@@ -130,7 +130,6 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
         json_object_object_get_ex(bestResult, "confidence", &valueObj);
 
         speechResponse->confidence = (double)json_object_get_double(valueObj);
-        printf("confidence = %f\r\n", speechResponse->confidence);
     }
 
     free(guid);

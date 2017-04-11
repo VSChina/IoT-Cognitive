@@ -73,10 +73,12 @@ int Microphone::writeWAVHeader(char * wav, WaveHeader *hdr)
     return 0;
 }
 
-char* Microphone::getWav(int *file_size) {
-    if (_wavFile == NULL) return NULL;
+void Microphone::startRecord() {
+    if (_wavFile == NULL) return;
     _recording = _wavFile + 44;
-    wait(_duration);
+}
+
+char* Microphone::getWav(int *file_size) {
     *file_size  = (int)_file_size;
     return _wavFile;
 }

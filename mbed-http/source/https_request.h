@@ -405,12 +405,16 @@ protected:
     static int ssl_recv(void *ctx, unsigned char *buf, size_t len) {
         int recv = -1;
         TCPSocket *socket = static_cast<TCPSocket *>(ctx);
-        recv = socket->recv(buf, len);
+        for (int i = 0; i < 5; ++i) {
+            recv = socket->recv(buf, len);
+            if (recv != 0) break;
+            wait_ms(500);
+        }
 
         if (NSAPI_ERROR_WOULD_BLOCK == recv) {
             return MBEDTLS_ERR_SSL_WANT_READ;
         }
-        else if (recv < 0) {
+        else if (recv <= 0) {
             return -1;
         }
         else {
@@ -424,12 +428,16 @@ protected:
     static int ssl_send(void *ctx, const unsigned char *buf, size_t len) {
        int size = -1;
         TCPSocket *socket = static_cast<TCPSocket *>(ctx);
-        size = socket->send(buf, len);
+        for (int i = 0; i < 5; ++i) {
+            size = socket->send(buf, len);
+            if (size != 0) break;
+            wait_ms(500);
+        }
 
         if(NSAPI_ERROR_WOULD_BLOCK == size) {
             return len;
         }
-        else if (size < 0){
+        else if (size <= 0){
             return -1;
         }
         else {
