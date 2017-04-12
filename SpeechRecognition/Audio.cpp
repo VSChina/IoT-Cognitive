@@ -25,10 +25,6 @@ void Audio::format(uint32_t sampleRate, uint8_t channelCount, uint8_t sampleBitL
     m_codec.format(m_sample_rate, m_channels, m_bit_depth);
 }
 
-void readCallback(void) {
-
-}
-
 /*
 ** Start recording audio data usine underlying codec
 */
