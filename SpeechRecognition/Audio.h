@@ -34,7 +34,8 @@ class Audio
         void startRecord(char * audioFile, int fileSize, uint8_t durationInSeconds);
         char* getWav(int *fileSize);
         void stop();
-        int getDurationByFileSize(int fileSize);
+        double getRecordedDuration();
+        int getCurrentSize();
 
     private:
         uint32_t m_sample_rate;
@@ -45,6 +46,8 @@ class Audio
         char * m_wavFile;
         char * m_record_cursor;
         int m_file_size;
+        int m_max_pcm_size;
+        Ticker _ticker;
 
         WaveHeader * m_hdr;
         NAU88C10 m_codec;
