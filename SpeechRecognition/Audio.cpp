@@ -2,8 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
 Audio::Audio(uint32_t sampleRate, uint8_t channelCount, uint8_t sampleBitLength)
-    : m_codec(I2C_SDA, I2C_SCL, 0x1A, /*fake pin names*/ D8, D9, D10, D11, D12)
+    //: m_codec(I2C_SDA, I2C_SCL, 0x1A, /*fake pin names*/ D8, D9, D10, D11, D12)
 {
     m_sample_rate = sampleRate;
     m_bit_depth = sampleBitLength;
@@ -45,8 +46,13 @@ void Audio::startRecord(char * audioFile, int fileSize, uint8_t durationInSecond
     m_duration = durationInSeconds;
     m_record_cursor = audioFile + WAVE_HEADER_SIZE;
 
+    // calculate the max pcm data size according to the given duration
+    m_max_pcm_size = m_sample_rate * m_channels * m_bit_depth * m_duration / 8;
+    printf("Max audio size: %d\r\n", m_max_pcm_size);
+
     // attach callback function to read audio data from codec
-    m_codec.attach(this, &Audio::readMic);
+    //m_codec.attach(this, &Audio::readMic);
+    _ticker.attach(callback(this, &Audio::readMic), 1.0 / m_sample_rate);
 
     printf("Start recording...\r\n");
     m_codec.startRecord();
@@ -60,6 +66,10 @@ char* Audio::getWav(int *file_size)
     int currentSize = m_record_cursor - m_wavFile;
     *file_size  = (int)currentSize;
 
+    // write wave header for this audio file
+    WaveHeader * hdr = genericWAVHeader();
+    writeWAVHeader(m_wavFile, hdr);
+
     return m_wavFile;
 }
 
@@ -69,6 +79,18 @@ void Audio::stop()
     m_codec.stop();
 }
 
+double Audio::getRecordedDuration()
+{
+    int pcmDataSize = m_record_cursor - m_wavFile - WAVE_HEADER_SIZE;  
+
+    int bytes_per_second = m_sample_rate * m_channels * m_bit_depth / 8;
+    return pcmDataSize / bytes_per_second;;
+}
+
+int Audio::getCurrentSize()
+{
+    return m_record_cursor - m_wavFile;
+}
 
 /*
 ** Read microphone data from codec
@@ -76,7 +98,10 @@ void Audio::stop()
 void Audio::readMic(void)
 {
     // If m_record_cursor exceeds given buffer size, then stop recording
-    if (m_record_cursor >= m_wavFile + m_file_size - 16 ) return;
+    if (m_record_cursor > m_wavFile + m_file_size - 16 ) return;
+
+    // If recording duration exceeds given buffer size, then stop recording
+    if (m_record_cursor > m_wavFile + m_max_pcm_size + WAVE_HEADER_SIZE - 16 ) return;
 
     // read audion data into codex buffer
     m_codec.read();
@@ -84,8 +109,8 @@ void Audio::readMic(void)
     // Copy audio data from codec to given user buffer.
     for (int i = 0; i < 4; i++)
     {
-        int data = m_codec.rxBuffer[i];
-        memcpy(m_record_cursor, &data, 4);     // Need to check data endian
+        int data = 0x38383838;                  //#TEST# m_codec.rxBuffer[i];
+        memcpy(m_record_cursor, &data, 4);      // Need to check data endian
         m_record_cursor += 4;
     }
 }
