@@ -68,7 +68,7 @@ public:
         _tcpsocket = new TCPSocket(net_iface);
         _request_builder = new HttpRequestBuilder(method, _parsed_url);
         _response = NULL;
-        _debug = true;
+        _debug = false;
         _ssl_ca_pem = ssl_ca_pem;
 
         DRBG_PERS = "mbed TLS helloword client";
