@@ -35,7 +35,7 @@ SpeechInterface::~SpeechInterface(void)
 char* SpeechInterface::generateGuidStr()
 {
     HTTPClient guidRequest = HTTPClient(HTTP_GET, GUID_GENERATOR_HTTP_REQUEST_URL);
-    Http_Response* _response = guidRequest.send();
+    const Http_Response* _response = guidRequest.send();
     if (_response == NULL)
     {
         if (_debug) printf("Guid generator HTTP request failed.\r\n");
@@ -45,7 +45,6 @@ char* SpeechInterface::generateGuidStr()
     char* guidStr = (char *)malloc(37);
     strcpy(guidStr, _response->body);
     if (_debug) printf("Got new guid: <%s> message <%s>\r\n", guidStr, _response -> status_message);
-    delete _response;
     return guidStr;
 }
 
@@ -53,7 +52,7 @@ char* SpeechInterface::getJwtToken()
 {
     HTTPClient tokenRequest = HTTPClient(HTTP_POST, TOKEN_REQUEST_URL);
     tokenRequest.set_header("Ocp-Apim-Subscription-Key", _cognitiveSubKey);
-    Http_Response* _response = tokenRequest.send();
+    const Http_Response* _response = tokenRequest.send();
     if (!_response)
     {
         if (_debug) printf("HttpRequest failed (error code %d)\n", tokenRequest.get_error());
@@ -63,7 +62,6 @@ char* SpeechInterface::getJwtToken()
     char* token = (char *)malloc(strlen(_response->body) + 8);
     sprintf(token, "Bearer %s", _response->body);
     if (_debug) printf("Got JwtToken: <%s> message <%s>\r\n", token, _response -> status_message);
-    delete _response;
     return token;
 }
 
@@ -85,7 +83,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     speechRequest.set_header("Content-Type", "plain/text");
     speechRequest.set_header("Authorization", jwtToken);
     
-    Http_Response* _response = speechRequest.send(audioFileBinary, length);
+    const Http_Response* _response = speechRequest.send(audioFileBinary, length);
     if (!_response)
     {
         if (_debug) printf("Speech API request failed (error code %d).\r\n", speechRequest.get_error());
@@ -94,8 +92,7 @@ SpeechResponse* SpeechInterface::recognizeSpeech(char * audioFileBinary, int len
     char* bodyStr = (char*)malloc(strlen(_response->body) + 1);
     strcpy(bodyStr, _response->body);
     if (_debug) printf("congnitive result: %s\r\n", bodyStr);
-    delete _response;
-
+    
     SpeechResponse *speechResponse = new SpeechResponse();
     if (speechResponse == NULL) {
         if (_debug) printf("SpeechResponse is null \r\n");
